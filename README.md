@@ -142,6 +142,7 @@ This will start:
 
 ### Messages
 - `GET /api/messages/:userId` - Get messages with a specific user
+- `POST /api/messages/:userId` - Send a message to a specific user
 
 ### Notifications
 - `GET /api/notifications` - Get user notifications
@@ -163,10 +164,11 @@ This will start:
 - **Models**: Shared model system to prevent compilation errors
 
 ### Real-time Communication
-- **WebSocket Events**: Bidirectional real-time communication
+- **REST API**: Primary method for sending messages via HTTP POST
+- **WebSocket Fallback**: Automatic fallback to WebSocket if API fails
 - **Instant Messaging**: Messages appear immediately when sent
-- **Typing Indicators**: Real-time typing status
-- **Online Status**: Live user presence tracking
+- **Typing Indicators**: Real-time typing status via WebSocket
+- **Online Status**: Live user presence tracking via WebSocket
 
 ## WebSocket Events
 
@@ -256,6 +258,7 @@ This will start:
 - **Users**: username, email, password, avatar, isOnline, lastSeen
 - **Messages**: senderId, receiverId, content, messageType, isRead, timestamp
 - **Notifications**: userId, type, title, content, isRead, data, timestamp
+- **Conversations**: participants, messages, lastMessage, lastMessageAt
 
 ## 🔧 Troubleshooting
 

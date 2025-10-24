@@ -59,7 +59,7 @@ export default function ChatWindow({ selectedUser, messages, currentUserId, setM
     }
   }, [socket, selectedUser._id])
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newMessage.trim()) return
 
@@ -79,8 +79,7 @@ export default function ChatWindow({ selectedUser, messages, currentUserId, setM
     // Add to messages state immediately
     setMessages(prev => [...prev, tempMessage])
     
-    // Send via socket
-    sendMessage(selectedUser._id, messageContent)
+    // Clear input immediately
     setNewMessage('')
     
     // Stop typing indicator
@@ -88,6 +87,53 @@ export default function ChatWindow({ selectedUser, messages, currentUserId, setM
       clearTimeout(typingTimeout)
     }
     stopTyping(selectedUser._id)
+    
+    try {
+      // Send message via REST API
+      const token = localStorage.getItem('token')
+      const response = await fetch(`/api/messages/${selectedUser._id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          content: messageContent,
+          messageType: 'text'
+        })
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error('Failed to send message via API:', errorData)
+        
+        // Fallback to WebSocket if API fails
+        console.log('Falling back to WebSocket...')
+        sendMessage(selectedUser._id, messageContent)
+        return
+      }
+      
+      const result = await response.json()
+      console.log('Message sent successfully via API:', result)
+      
+      // Replace temporary message with real message from server
+      setMessages(prev => prev.map(msg => 
+        msg._id === tempMessage._id 
+          ? {
+              ...msg,
+              _id: result.data.id,
+              timestamp: result.data.timestamp
+            }
+          : msg
+      ))
+      
+    } catch (error) {
+      console.error('Error sending message via API:', error)
+      
+      // Fallback to WebSocket if API fails
+      console.log('Falling back to WebSocket...')
+      sendMessage(selectedUser._id, messageContent)
+    }
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
